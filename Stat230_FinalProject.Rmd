@@ -4,7 +4,6 @@ subtitle: "Eleanor Kim"
 date: '2024-04-12'
 output:
   pdf_document: default
-  html_document: default
 ---
 
 # Set Up
@@ -20,6 +19,7 @@ library(ggplot2)
 library(glmnet)
 library(MASS)
 library(knitr)
+library(Matrix)
 ```
 
 # Data Cleaning
@@ -135,9 +135,6 @@ ggplot(data, aes(x = Humidity, y = PM2.5_Hour_MassConc_Calibrated)) +
 ggplot(data, aes(x = Temperature, y = PM2.5_Hour_MassConc_Calibrated)) +
   geom_point(size = .5, alpha = 0.1) +
   labs(title = "Scatter Plot of PM2.5 vs. Temperature")
-
-# Correlation analysis
-correlationt <- cor(data$Temperature, data$PM2.5_Hour_MassConc_Calibrated)
 
 ```
 
@@ -698,7 +695,6 @@ ridge_model <- lm.ridge(PM2.5_Hour_MassConc_Calibrated ~ PM2.5_Hour_MassConc_Cal
             Humidity + Temperature + factor(Season) + factor(Neighborhood), data = train_data, lambda = best_lambda_cv)
 
 # Summarize the Ridge Regression model
-summary(ridge_model)
 ridge_model$coef
 ```
 
@@ -860,7 +856,7 @@ model_metrics <- data.frame(
 )
 
 # Compare model selection criteria
-kable(model_metrics)
+print(model_metrics)
 ```
 
 
@@ -902,10 +898,6 @@ outliers <- cooks_distance > threshold
 
 # Extract rows corresponding to outliers from the original data
 outlier_data_cooks <- train_data[outliers, ]
-
-# Print the number of outliers
-print(nrow(outlier_data_cooks))
-head(outlier_data_cooks)
 ```
 
 #### Identify outliers using top 1% contributors to the OLS Coefficient
@@ -1165,13 +1157,6 @@ final_ols_model <- lm(y_subset ~ ., data=df)
 summary(final_ols_model)
 ```
 
-\begin{align*}
-PM_{2.5_{t, i}} = & - \text{2.43} + \text{0.75}  PM_{2.5_{t-1, i}} + \text{0.15}  PM_{2.5_{t-2}, i}  + \text{0.03}  PM_{2.5_{t-3, i}} + \text{0.04}  PM_{2.5_{t-4, i}} + \text{0.01}  PM_{2.5_{t-5, i}}\\
-&    + \text{0.01}  PM_{2.5_{t-6}, i} + \text{0.03}  Humidity_{t, i} + \text{0.08}  Temperature_{t, i} - \text{0.22}  Winter_{t, i} - \text{0.43}  Chinatown_{t, i} \\
-& - \text{0.28}  Potrero\ Hill_{t, i} - \text{0.29}  SoMa_{t, i} - \text{0.34}  Tenderloin_{t, i} + \epsilon_{t, i}
-\end{align*}
-
-
 
 ```{r}
 # Predicted vs Actual Plot
@@ -1205,6 +1190,8 @@ device_name <- lag_data_clean$Device_Name
 # Combine actual, predicted, datetime, neighborhood, and Device_Name values into a data frame
 plot_data <- data.frame(Datetime = datetime, Neighborhood = neighborhood, Device_Name = device_name, Actual = actual, Predicted = predicted)
 nrow(plot_data)
+
+# Accuracy rate
 subset = plot_data[plot_data$Datetime > "2022-06-14 21:00:00 PDT" & plot_data$Datetime < "2022-06-30 21:00:00 PDT",]
 1-mean(abs(round(subset$Actual,5)-round(subset$Predicted,5))/round(subset$Actual,5))
 #9-10 2022
@@ -1239,7 +1226,6 @@ tableau_data <- data.frame(
 
 # Save data to csv
 # write.csv(tableau_data, "forecasting.csv")
-
 ```
 
 
